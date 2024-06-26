@@ -17,7 +17,7 @@ cartBtn.addEventListener("click", function(){
 })
 
 closeModalBtn.addEventListener("click", function(){
-     cartModal.style.display = "none"
+       cartModal.style.display = "none"
 })
 
 cartModal.addEventListener("click", function(event){
@@ -78,7 +78,7 @@ function updateCartModal()
              <p class="font-medium mt-2">R$ ${item.price.toFixed(2)}</p>
           </div>
           
-            <button> remover </button>
+            <button class="remove-from-cart-btn" data-name="${item.name}"> remover </button>
         
         </div>
         `
@@ -88,7 +88,7 @@ function updateCartModal()
 
     })
 
-    cart.forEach((element) => console.log(element));
+   // cart.forEach((element) => console.log(element));
 
     cartTotal.textContent = total.toLocaleString("pt-BR", {
         style: "currency",
@@ -97,4 +97,98 @@ function updateCartModal()
 
     cartCount.innerHTML = cart.length;
 
+}
+
+//remove item do carrinho
+cartItems.addEventListener("click", function(event){
+    if(event.target.classList.contains("remove-from-cart-btn")){
+        const name =event.target.getAttribute("data-name")
+
+        removeItemCart(name);
+    }
+})
+
+function removeItemCart(name){
+   const index = cart.findIndex(item =>item.name === name);
+
+   if(index !== -1){
+       const item = cart[index];
+
+       if(item.quantity > 1){
+        item.quantity -= 1;
+        updateCartModal();
+        return;
+       }
+
+       cart.splice(index, 1);
+       updateCartModal();
+   }
+}
+
+addressInput.addEventListener("input", function(event){
+   let inputValue = event.target.value;
+
+   if(inputValue !== ""){
+    addressInput.classList.remove("border-red-500")
+    addressWarn.classList.add("hidden")
+   }
+})
+
+checkOutBtn.addEventListener("click", function(){
+
+    const isOpen = checkRestauranteOpen();
+    if(!isOpen){
+       
+       Toastify({
+        text: "Restaurante fechado no momento!",
+        duration: 3000,
+        destination: "https://github.com/apvarun/toastify-js",
+        close: true,
+        gravity: "top", // `top` or `bottom`
+        position: "center", // `left`, `center` or `right`
+        stopOnFocus: true, // Prevents dismissing of toast on hover
+        style: {
+          background: "#ef4444",
+        },
+       }).showToast();
+        return;
+    }
+
+    if(cart.length === 0) return;
+    if(addressInput.value === ""){
+        addressWarn.classList.remove("hidden")
+        addressInput.classList.add("border-red-500")
+        return;
+    }
+
+    //enviar para API do whatsapp
+    const cartItems = cart.map((item) => {
+        return (`${item.name} Quantidade: (${item.quantity}) Preço: R$${item.price} |`)
+    }).join("")
+
+    const message = encodeURIComponent(cartItems)
+    const phone = "+557981133883"
+
+    window.open(`https://wa.me/${phone}?text=${message} Endereço: ${addressInput.value}`, "_blank")
+
+    cart = [];
+    updateCartModal();
+})
+
+//verifica a hora e manipula o card de horario
+function checkRestauranteOpen(){
+    const data = new Date();
+    const hora = data.getHours();
+    return hora >= 18 && hora < 24;
+}
+
+const spanItem = document.getElementById("date-span")
+const isOpen =checkRestauranteOpen();
+
+if(isOpen){
+    spanItem.classList.remove("bg-red-500")
+    spanItem.classList.add("bg-green-600")
+}else{
+    spanItem.classList.remove("bg-green-600")
+    spanItem.classList.add("bg-red-500")
 }
